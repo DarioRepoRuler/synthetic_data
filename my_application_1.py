@@ -146,12 +146,14 @@ light_1 = prim_utils.create_prim(
     }
 )
 
+prim.set_joint_positions(np.array([ np.pi , 0.0, 0.0, 0.0, 0.0, 0.0]))
+
 # Resetting the world needs to be called before querying anything related to an articulation specifically.
 # Its recommended to always do a reset after adding your assets, for physics handles to be propagated properly
 world.reset()
 camera.initialize()
 prim.initialize()
-light_1.initialize()
+#light_1.initialize()
 #camera.add_motion_vectors_to_frame()
 
 print(f"Prim: {prim}")
@@ -163,7 +165,7 @@ for i in range(30):
     state = prim.get_joints_state()
     print(f"Joint states: {state.positions}")
     #prim.apply_action(action)
-    prim.set_joint_positions(np.array([ 0.0 , 0.0, 0.0, 0.0, 0.0, 0.0]))
+    prim.set_joint_positions(np.array([ np.pi , 0.0, 0.0, 0.0, 0.0, 0.0]))
     capture_viewport_to_file(vp_api, f"/home/dario/Documents/AUT_Proj/data_gen/Data/picture_{i}")
     world.step(render=True) # execute one physics step and one rendering step
     camera.get_current_frame()
