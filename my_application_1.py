@@ -160,12 +160,13 @@ print(f"Prim: {prim}")
 print(f"Limits: {prim_v.get_dof_limits()}")
 vp_api = get_active_viewport()
 print(f"VP API: {vp_api.camera_path}")
+action = ArticulationAction(joint_positions=np.array([ 0.0 , np.pi/2, 0.0, 0.0, 0.0, 0.0]))
 
 for i in range(30):
     state = prim.get_joints_state()
     print(f"Joint states: {state.positions}")
-    #prim.apply_action(action)
-    prim.set_joint_positions(np.array([ np.pi , 0.0, 0.0, 0.0, 0.0, 0.0]))
+    prim.apply_action(action)
+    #prim.set_joint_positions(np.array([ np.pi , 0.0, 0.0, 0.0, 0.0, 0.0]))
     capture_viewport_to_file(vp_api, f"/home/dario/Documents/AUT_Proj/data_gen/Data/picture_{i}")
     world.step(render=True) # execute one physics step and one rendering step
     camera.get_current_frame()
@@ -174,4 +175,5 @@ for i in range(30):
         print(f"Camera Position: {camera.get_default_state().position} and Camera Orientation: {camera.get_default_state().orientation}")
         print(f"World position: {camera.get_world_pose()[0]} and World orientation: {camera.get_world_pose()[1]}")
         plt.imsave(f"/home/dario/Documents/AUT_Proj/data_gen/Data/rgba_image_{i}.png", camera.get_rgba()[:, :, :3])
+        
 simulation_app.close() # close Isaac Sim

@@ -1,5 +1,6 @@
 from omni.isaac.kit import SimulationApp
 simulation_app = SimulationApp(launch_config={"headless": False})
+
 import os
 import omni.replicator.core as rep
 import omni.usd
@@ -7,9 +8,7 @@ import omni.usd
 import math
 import random
 
-
-from omni.isaac.core import World
-from pxr import Gf, PhysxSchema, Sdf, UsdLux, UsdPhysics
+from pxr import Gf, PhysxSchema, Sdf, UsdPhysics
 
 # Import the URDF extension interface
 from omni.importer.urdf import _urdf
@@ -17,6 +16,59 @@ from omni.isaac.core.utils.extensions import get_extension_path_from_name
 from omni.isaac.core.articulations import Articulation, ArticulationView
 
 import numpy as np
+
+# Camera specific
+from scipy.spatial.transform import Rotation as R
+import omni.isaac.core.utils.numpy.rotations as rot_utils
+from omni.isaac.sensor import Camera
+import matplotlib.pyplot as plt
+
+
+
+def camera_pose():
+    # Generate a random position
+    posx = np.random.uniform(0, 10)
+    posy = np.random.uniform(-10, 10)
+    posz = np.random.uniform(0, 10)
+    position = np.array([posx, posy, posz])
+    # Calculate the direction vector to the origin
+    direction = -position
+
+    # Normalize the direction vector
+    direction /= np.linalg.norm(direction)
+
+    # Calculate the camera's current forward vector
+    forward = np.array([1, 0, 0]) 
+
+    # Calculate the rotation axis (cross product of initial and desired directions)
+    rotation_axis = np.cross(forward, direction)
+    rotation_axis /= np.linalg.norm(rotation_axis)
+
+    # Calculate the rotation angle (angle between initial and desired directions)
+    rotation_angle = np.arccos(np.dot(forward, direction))
+
+    # Create a rotation matrix using the axis-angle representation
+    rotation_matrix = R.from_rotvec(rotation_angle * rotation_axis).as_matrix()
+
+    # Extract Euler angles from the rotation matrix
+    euler_angles = R.from_matrix(rotation_matrix).as_euler('xyz')
+    euler_angles[0] = 0.0
+    return position, euler_angles
+    
+
+def initialise_cameras(num= 1):    
+    cameras = []
+    for i in range(num):
+        pose = camera_pose()
+        camera = Camera(
+                prim_path=f"/World/camera_{i}",
+                position=pose[0],
+                frequency=20,
+                resolution=(1080,  720),
+                orientation=rot_utils.euler_angles_to_quats(np.degrees(pose[1]), degrees=True),
+            )
+        cameras.append(camera)
+    return cameras
 
 # Acquire the URDF extension interface
 urdf_interface = _urdf.acquire_urdf_interface()
@@ -29,30 +81,27 @@ import_config.make_default_prim = True
 import_config.self_collision = False
 import_config.create_physics_scene = False
 import_config.import_inertia_tensor = False
-import_config.default_drive_strength = 1047.19751
-import_config.default_position_drive_damping = 52.35988
+import_config.default_drive_strength = 1000.0
+import_config.default_position_drive_damping = 50.0
 import_config.default_drive_type = _urdf.UrdfJointTargetType.JOINT_DRIVE_POSITION
 import_config.distance_scale = 1
 import_config.density = 0.0
+
 # Get the urdf file path
-extension_path = get_extension_path_from_name("omni.importer.urdf")
-print(f"Extension path: {extension_path}")
-root_path = extension_path + "/data/urdf/robots/franka_description/robots"
 root_path = "/home/dario/Documents/AUT_Proj/data_gen/abb_common"
 file_name = "urdf/irb120.urdf"
 
-#print(f"Path loaded: {os.path.join(root_path, file_name)}")
-# Finally import the robot
+# Import the robot
 result, prim_path = omni.kit.commands.execute( "URDFParseAndImportFile", urdf_path=os.path.join(root_path, file_name),
                                                 import_config=import_config, get_articulation_root=True,)
 
-
+# Get stage handle
 stage = omni.usd.get_context().get_stage()
 # Enable physics
 scene = UsdPhysics.Scene.Define(stage, Sdf.Path("/physicsScene"))
 # Set gravity
 scene.CreateGravityDirectionAttr().Set(Gf.Vec3f(0.0, 0.0, -1.0))
-scene.CreateGravityMagnitudeAttr().Set(9.81)
+scene.CreateGravityMagnitudeAttr().Set(0.0) # we don't want gravity to affect the robot
 # Set solver settings
 PhysxSchema.PhysxSceneAPI.Apply(stage.GetPrimAtPath("/physicsScene"))
 physxSceneAPI = PhysxSchema.PhysxSceneAPI.Get(stage, "/physicsScene")
@@ -69,9 +118,15 @@ omni.kit.commands.execute(
     planePath="/groundPlane",
     axis="Z",
     size=1500.0,
-    position=Gf.Vec3f(0, 0, -0.1),
+    position=Gf.Vec3f(0, 0, -2),
     color=Gf.Vec3f(0.5),
 )
+# Add camera
+# Initialize the camera
+pose = camera_pose()
+
+cameras = initialise_cameras(1)
+
 
 # Add lights
 distance_light = rep.create.light(rotation=(315, 0, 0), intensity=4000, light_type="distant")
@@ -84,17 +139,20 @@ simulation_app.update()
 
 prim = Articulation(prim_path=prim_path, name="abbyArm")
 prim.initialize()
+for camera in cameras:
+    camera.initialize()
 
-# Need more cameras!
-cam = rep.create.camera(position=(0, 0, 5), look_at=(0, 0, 0))
-rp = rep.create.render_product(cam, (512, 512)) #"/OmniverseKit_Persp"
+# From the replicator example
 
-writer = rep.WriterRegistry.get("BasicWriter")
-out_dir = os.getcwd() + "/_out_custom_event"
-print(f"Writing data to {out_dir}")
-writer.initialize(output_dir=out_dir, rgb=True)
-writer.attach(rp)
-        
+#cam = rep.create.camera(position=(0, 0, 5), look_at=(0, 0, 0))
+#rp = rep.create.render_product(cam, (512, 512)) #"/OmniverseKit_Persp"
+# writer = rep.WriterRegistry.get("BasicWriter")
+# out_dir = os.getcwd() + "/_out_custom_event"
+# print(f"Writing data to {out_dir}")
+# writer.initialize(output_dir=out_dir, rgb=True)
+# writer.attach(rp)
+
+  
 with rep.trigger.on_custom_event(event_name="randomize_light"):
     with distance_light:
         # Calculate random spherical coordinates
@@ -109,41 +167,48 @@ with rep.trigger.on_custom_event(event_name="randomize_light"):
         # Set the light's position
         rep.modify.pose(position=(x, y, z),  look_at=(0, 0, 0))
         rep.randomizer.rotation()
-        # You can also add randomization for light intensity here if needed
 
 with rep.trigger.on_custom_event(event_name="randomize_sphere_light"):
     with sphere_light:
-        # Calculate random spherical coordinates
-        theta = random.uniform(0, 2 * math.pi)
-        phi = random.uniform(0, math.pi)
-        
-        # Convert spherical coordinates to Cartesian coordinates
-        x = math.sin(phi) * math.cos(theta)
-        y = math.sin(phi) * math.sin(theta)
-        z = math.cos(phi)
+        # Calculate random cooridnates
+        x,y = np.random.uniform(-10, 10,2)
+        z = np.random.uniform(0, 10)
         
         # Set the light's position
         rep.modify.pose(position=(x, y, z),  look_at=(0, 0, 0))
         rep.modify.attribute("color", (random.uniform(0, 1), random.uniform(0, 1), random.uniform(0, 1)))
+        
+        
+print(f"Arm dof upper: {prim.dof_properties['upper']}")
+print(f"Arm dof lower: {prim.dof_properties['lower']}")
+dof_lower = prim.dof_properties['lower']
+dof_upper = prim.dof_properties['upper']
 
-  
+random_dof_values = np.random.uniform(dof_lower, dof_upper)
+print(f"Random dof values: {random_dof_values}")
 
-
-for i in range(30):
+for i in range(10):
     state = prim.get_joints_state()
+    if np.isnan(state.positions).any():
+        break
     print(f"Joint states: {state.positions}")
-    #prim.apply_action(action)
-    prim.set_joint_positions(np.array([ 0.0 , np.pi/7, -np.pi/5, 0.0, 0.0, 0.0]))
     
+    #cam_prim = cam.get_output_prims()["prims"][0]
+    prim.set_joint_positions(random_dof_values)
+    #prim.set_joint_positions(np.array([ 0.0 , 0.0, 0.0, 0.0, 0.0, 0.0]))
+
     rep.utils.send_og_event(event_name="randomize_light")
-    print("Capturing frame")
-    rep.orchestrator.step(rt_subframes=8)
+
+    rep.orchestrator.step(rt_subframes=1)
+    #prim.set_joint_positions(np.array([ 0.0 , np.pi/4, -np.pi/4, 0.0, 0.0, 0.0]))
     rep.utils.send_og_event(event_name="randomize_sphere_light")
-    print("Capturing frame")
-    rep.orchestrator.step(rt_subframes=8)
-    #rep.orchestrator.step()
+
+    rep.orchestrator.step(rt_subframes=1)
+    print(f"Camera Position: {camera.get_default_state().position} and Camera Orientation: {camera.get_default_state().orientation}")    
+    #print(f"World position: {camera.get_world_pose()[0]} and World orientation: {camera.get_world_pose()[1]}") # this is just to double check the camera position
+    for j, camera in enumerate(cameras):
+        plt.imsave(f"/home/dario/Documents/AUT_Proj/data_gen/Data/rgba_image_{i}_{j}.png", camera.get_rgba()[:, :, :3])
     simulation_app.update()
     
 rep.orchestrator.wait_until_complete()
-
 simulation_app.close() # close Isaac Sim
