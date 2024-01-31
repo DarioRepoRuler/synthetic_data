@@ -129,8 +129,9 @@ cameras = initialise_cameras(1)
 
 
 # Add lights
-distance_light = rep.create.light(rotation=(315, 0, 0), intensity=4000, light_type="distant")
-sphere_light = rep.create.light(rotation=(315, 0, 0), intensity=4000, color=(1.0, 1.0, 1.0), light_type="sphere")
+distance_light = rep.create.light(rotation=(315, 0, 0), intensity=2000, light_type="distant")
+distance_light_1 = rep.create.light(rotation=(315, 0, 0), intensity=2000, light_type="distant")
+sphere_light = rep.create.light(rotation=(315, 0, 0), intensity=2000, color=(1.0, 1.0, 1.0), light_type="sphere")
 
 # Start simulation
 omni.timeline.get_timeline_interface().play()
@@ -142,27 +143,31 @@ prim.initialize()
 for camera in cameras:
     camera.initialize()
 
-# From the replicator example
-
-#cam = rep.create.camera(position=(0, 0, 5), look_at=(0, 0, 0))
-#rp = rep.create.render_product(cam, (512, 512)) #"/OmniverseKit_Persp"
-# writer = rep.WriterRegistry.get("BasicWriter")
-# out_dir = os.getcwd() + "/_out_custom_event"
-# print(f"Writing data to {out_dir}")
-# writer.initialize(output_dir=out_dir, rgb=True)
-# writer.attach(rp)
-
-  
 with rep.trigger.on_custom_event(event_name="randomize_light"):
     with distance_light:
         # Calculate random spherical coordinates
-        theta = random.uniform(0, 2 * math.pi)  # Azimuthal angle
-        phi = random.uniform(0, math.pi)       # Polar angle
-
+        theta = random.uniform(0, math.pi)  # Azimuthal angle
+        phi = random.uniform(0, math.pi/4)       # Polar angle
+        r = random.uniform(5, 10)
         # Convert spherical coordinates to Cartesian coordinates
-        x = math.sin(phi) * math.cos(theta)
-        y = math.sin(phi) * math.sin(theta)
-        z = math.cos(phi)
+        x = r* math.sin(phi) * math.cos(theta)
+        y = r* math.sin(phi) * math.sin(theta)
+        z = r* math.cos(phi)
+
+        # Set the light's position
+        rep.modify.pose(position=(x, y, z),  look_at=(0, 0, 0))
+        rep.randomizer.rotation()
+
+with rep.trigger.on_custom_event(event_name="randomize_light_1"):
+    with distance_light_1:
+        # Calculate random spherical coordinates
+        theta = random.uniform(-math.pi, 0)  # Azimuthal angle
+        phi = random.uniform(0, math.pi/4)       # Polar angle
+        r = random.uniform(5, 10)
+        # Convert spherical coordinates to Cartesian coordinates
+        x = r* math.sin(phi) * math.cos(theta)
+        y = r* math.sin(phi) * math.sin(theta)
+        z = r* math.cos(phi)
 
         # Set the light's position
         rep.modify.pose(position=(x, y, z),  look_at=(0, 0, 0))
@@ -178,34 +183,33 @@ with rep.trigger.on_custom_event(event_name="randomize_sphere_light"):
         rep.modify.pose(position=(x, y, z),  look_at=(0, 0, 0))
         rep.modify.attribute("color", (random.uniform(0, 1), random.uniform(0, 1), random.uniform(0, 1)))
         
-        
+
+
 print(f"Arm dof upper: {prim.dof_properties['upper']}")
 print(f"Arm dof lower: {prim.dof_properties['lower']}")
 dof_lower = prim.dof_properties['lower']
 dof_upper = prim.dof_properties['upper']
 
-random_dof_values = np.random.uniform(dof_lower, dof_upper)
-print(f"Random dof values: {random_dof_values}")
+
 
 for i in range(10):
+    random_dof_values = np.random.uniform(dof_lower, dof_upper)
+    print(f"Random dof values: {random_dof_values}")
+    
     state = prim.get_joints_state()
     if np.isnan(state.positions).any():
         break
     print(f"Joint states: {state.positions}")
-    
-    #cam_prim = cam.get_output_prims()["prims"][0]
     prim.set_joint_positions(random_dof_values)
-    #prim.set_joint_positions(np.array([ 0.0 , 0.0, 0.0, 0.0, 0.0, 0.0]))
-
     rep.utils.send_og_event(event_name="randomize_light")
-
-    rep.orchestrator.step(rt_subframes=1)
-    #prim.set_joint_positions(np.array([ 0.0 , np.pi/4, -np.pi/4, 0.0, 0.0, 0.0]))
+    rep.utils.send_og_event(event_name="randomize_light_1")
+    #rep.orchestrator.step(rt_subframes=1)
     rep.utils.send_og_event(event_name="randomize_sphere_light")
-
-    rep.orchestrator.step(rt_subframes=1)
+    
+    rep.orchestrator.step(rt_subframes=10)
     print(f"Camera Position: {camera.get_default_state().position} and Camera Orientation: {camera.get_default_state().orientation}")    
     #print(f"World position: {camera.get_world_pose()[0]} and World orientation: {camera.get_world_pose()[1]}") # this is just to double check the camera position
+
     for j, camera in enumerate(cameras):
         plt.imsave(f"/home/dario/Documents/AUT_Proj/data_gen/Data/rgba_image_{i}_{j}.png", camera.get_rgba()[:, :, :3])
     simulation_app.update()
