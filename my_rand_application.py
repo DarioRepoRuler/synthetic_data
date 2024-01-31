@@ -125,13 +125,13 @@ omni.kit.commands.execute(
 # Initialize the camera
 pose = camera_pose()
 
-cameras = initialise_cameras(1)
+cameras = initialise_cameras(5)
 
 
 # Add lights
-distance_light = rep.create.light(rotation=(315, 0, 0), intensity=2000, light_type="distant")
-distance_light_1 = rep.create.light(rotation=(315, 0, 0), intensity=2000, light_type="distant")
-sphere_light = rep.create.light(rotation=(315, 0, 0), intensity=2000, color=(1.0, 1.0, 1.0), light_type="sphere")
+distance_light = rep.create.light(rotation=(315, 0, 0), intensity=3000, light_type="distant")
+distance_light_1 = rep.create.light(rotation=(315, 0, 0), intensity=3000, light_type="distant")
+#sphere_light = rep.create.light(rotation=(315, 0, 0), intensity=4000, color=(1.0, 1.0, 1.0), light_type="sphere")
 
 # Start simulation
 omni.timeline.get_timeline_interface().play()
@@ -147,7 +147,7 @@ with rep.trigger.on_custom_event(event_name="randomize_light"):
     with distance_light:
         # Calculate random spherical coordinates
         theta = random.uniform(0, math.pi)  # Azimuthal angle
-        phi = random.uniform(0, math.pi/4)       # Polar angle
+        phi = random.uniform(math.pi/4, math.pi/2)       # Polar angle
         r = random.uniform(5, 10)
         # Convert spherical coordinates to Cartesian coordinates
         x = r* math.sin(phi) * math.cos(theta)
@@ -162,7 +162,7 @@ with rep.trigger.on_custom_event(event_name="randomize_light_1"):
     with distance_light_1:
         # Calculate random spherical coordinates
         theta = random.uniform(-math.pi, 0)  # Azimuthal angle
-        phi = random.uniform(0, math.pi/4)       # Polar angle
+        phi = random.uniform(math.pi/4, math.pi/2)       # Polar angle
         r = random.uniform(5, 10)
         # Convert spherical coordinates to Cartesian coordinates
         x = r* math.sin(phi) * math.cos(theta)
@@ -173,15 +173,15 @@ with rep.trigger.on_custom_event(event_name="randomize_light_1"):
         rep.modify.pose(position=(x, y, z),  look_at=(0, 0, 0))
         rep.randomizer.rotation()
 
-with rep.trigger.on_custom_event(event_name="randomize_sphere_light"):
-    with sphere_light:
-        # Calculate random cooridnates
-        x,y = np.random.uniform(-10, 10,2)
-        z = np.random.uniform(0, 10)
+# with rep.trigger.on_custom_event(event_name="randomize_sphere_light"):
+#     with sphere_light:
+#         # Calculate random cooridnates
+#         x,y = np.random.uniform(-10, 10,2)
+#         z = np.random.uniform(5, 10)
         
-        # Set the light's position
-        rep.modify.pose(position=(x, y, z),  look_at=(0, 0, 0))
-        rep.modify.attribute("color", (random.uniform(0, 1), random.uniform(0, 1), random.uniform(0, 1)))
+#         # Set the light's position
+#         rep.modify.pose(position=(x, y, z),  look_at=(0, 0, 0))
+#         rep.modify.attribute("color", (random.uniform(0, 1), random.uniform(0, 1), random.uniform(0, 1)))
         
 
 
@@ -198,15 +198,17 @@ for i in range(10):
     
     state = prim.get_joints_state()
     if np.isnan(state.positions).any():
+        #prim.initialize()
         break
     print(f"Joint states: {state.positions}")
     prim.set_joint_positions(random_dof_values)
     rep.utils.send_og_event(event_name="randomize_light")
+    rep.orchestrator.step(rt_subframes=1)
     rep.utils.send_og_event(event_name="randomize_light_1")
     #rep.orchestrator.step(rt_subframes=1)
-    rep.utils.send_og_event(event_name="randomize_sphere_light")
+    #rep.utils.send_og_event(event_name="randomize_sphere_light")
     
-    rep.orchestrator.step(rt_subframes=10)
+    rep.orchestrator.step(rt_subframes=1)
     print(f"Camera Position: {camera.get_default_state().position} and Camera Orientation: {camera.get_default_state().orientation}")    
     #print(f"World position: {camera.get_world_pose()[0]} and World orientation: {camera.get_world_pose()[1]}") # this is just to double check the camera position
 
