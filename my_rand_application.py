@@ -36,9 +36,9 @@ from flying_distractors.dynamic_shape_set import DynamicShapeSet
 
 def camera_pose():
     # Generate a random position
-    posx = np.random.uniform(0, 10)
-    posy = np.random.uniform(-10, 10)
-    posz = np.random.uniform(0, 10)
+    posx = np.random.uniform(2, 5)
+    posy = np.random.uniform(-5, 5)
+    posz = np.random.uniform(0, 5)
     position = np.array([posx, posy, posz])
     # Calculate the direction vector to the origin
     direction = -position
@@ -79,12 +79,12 @@ def initialise_cameras(num= 1):
         cameras.append(camera)
     return cameras
 
-def setup_collision_box(rotation_quat, position = np.array([0.0, 0.0, 0.0]) ):
+def setup_collision_box(rotation_quat, position = np.array([0.0, 0.0, 0.0]), collision_box_path = "/World/collision_box",  collision_box_name = "collision_box"):
         # Create a collision box in view of the camera, allowing distractors placed in the box to be within
         # [MIN_DISTANCE, MAX_DISTANCE] of the camera. The collision box will be placed in front of the camera,
         # regardless of CAMERA_ROTATION or CAMERA_RIG_ROTATION.
-        collision_box_path = "/World/collision_box"
-        collision_box_name = "collision_box"
+        
+        
 
         # Collision box has no rotation with respect to the camera.
         # collision_box_rotation_from_camera = np.array([0, 0, 0])
@@ -106,7 +106,7 @@ def setup_collision_box(rotation_quat, position = np.array([0.0, 0.0, 0.0]) ):
             height=1.0
         )
 
-def setup_distractors(collision_box):
+def setup_distractors(collision_box, num_distractors=5, i=0):
         # List of distractor objects should not contain objects that are being used for training
         #train_objects = ['003_cracker_box', '003_cracker_box']
         distractor_mesh_filenames = ['002_master_chef_can', '004_sugar_box', '005_tomato_soup_can', '006_mustard_bottle', '007_tuna_fish_can', '008_pudding_box', '009_gelatin_box', '010_potted_meat_can', '011_banana', '019_pitcher_base', '021_bleach_cleanser', '024_bowl', '025_mug', '036_wood_block', '037_scissors', '040_large_marker', '051_large_clamp', '052_extra_large_clamp', '061_foam_brick']
@@ -123,11 +123,11 @@ def setup_distractors(collision_box):
         
         # Distractors for the MESH dataset
         mesh_shape_set = DynamicShapeSet(
-            "/World/mesh_shape_set",
-            "mesh_shape_set",
-            "mesh_shape",
-            "mesh_shape",
-            10, # number of mesh distractors
+            f"/World/mesh_shape_set_{i}",
+            f"mesh_shape_set_{i}",
+            f"mesh_shape_{i}",
+            f"mesh_shape_{i}",
+            num_distractors, # number of mesh distractors
             collision_box,
             scale=np.array([0.05, 0.05, 0.05]),
             mass=1,
@@ -136,13 +136,13 @@ def setup_distractors(collision_box):
             #self.mesh_distractors.add(mesh_shape_set)
 
         mesh_object_set = DynamicObjectSet(
-            "/World/mesh_object_set",
-            "mesh_object_set",
+            f"/World/mesh_object_set_{i}",
+            f"mesh_object_set_{i}",
             usd_path_list,
             mesh_list,
-            "mesh_object",
-            "mesh_object",
-            10, # number of distractors
+            f"mesh_object_{i}",
+            f"mesh_object_ {i}",
+            num_distractors, # number of distractors
             collision_box,
             scale=np.array([0.5, 0.5 ,0.5]),
             mass=1,
@@ -238,8 +238,14 @@ simulation_app.update()
 
 prim = Articulation(prim_path=prim_path, name="abbyArm")
 prim.initialize()
-for camera in cameras:
+for i,camera in enumerate(cameras):
     camera.initialize()
+    print(f"Camera {i} position: {camera.get_default_state().position} and Camera {i} orientation: {camera.get_default_state().orientation}")
+    
+    box = setup_collision_box(camera.get_default_state().orientation,camera.get_default_state().position*0.8, collision_box_path = f"/World/collision_box_{i}",  collision_box_name = f"collision_box_{i}")
+    setup_distractors(box, num_distractors=10, i=i)
+    
+
 
 with rep.trigger.on_custom_event(event_name="randomize_light"):
     with distance_light:
@@ -312,15 +318,18 @@ rep.randomizer.register(randomize_domelight, override=True)
 
 with rep.trigger.on_custom_event(event_name="randomize_domelight"):
     rep.randomizer.randomize_domelight(dome_texture_paths)#images_paths
-        
+
+
+# box = setup_collision_box(camera.get_default_state().orientation, np.array([2.0 ,2.0 ,0.0]))
+# setup_distractors(box)
+       
 
 print(f"Arm dof upper: {prim.dof_properties['upper']}")
 print(f"Arm dof lower: {prim.dof_properties['lower']}")
 dof_lower = prim.dof_properties['lower'] + 0.1
 dof_upper = prim.dof_properties['upper'] - 0.1
 
-box = setup_collision_box(camera.get_default_state().orientation, np.array([2.0 ,2.0 ,0.0]))
-setup_distractors(box)
+
 
 for i in range(10):
     random_dof_values = np.random.uniform(dof_lower, dof_upper)
@@ -332,6 +341,7 @@ for i in range(10):
         #prim.initialize()
         prim.set_joint_positions(np.zeros(6))
         #break
+    
     print(f"Joint states: {state.positions}")
     prim.set_joint_positions(random_dof_values)
     rep.utils.send_og_event(event_name="randomize_light")
