@@ -237,7 +237,10 @@ omni.timeline.get_timeline_interface().play()
 simulation_app.update()
 
 prim = Articulation(prim_path=prim_path, name="abbyArm")
+#primv = ArticulationView(prim_paths_expr="/abbyArm", name="abbyArm")
 prim.initialize()
+#primv.initialize()
+
 for i,camera in enumerate(cameras):
     camera.initialize()
     print(f"Camera {i} position: {camera.get_default_state().position} and Camera {i} orientation: {camera.get_default_state().orientation}")
@@ -326,6 +329,7 @@ with rep.trigger.on_custom_event(event_name="randomize_domelight"):
 
 print(f"Arm dof upper: {prim.dof_properties['upper']}")
 print(f"Arm dof lower: {prim.dof_properties['lower']}")
+#print(f"Prim View test: {primv.body_names}")
 dof_lower = prim.dof_properties['lower'] + 0.1
 dof_upper = prim.dof_properties['upper'] - 0.1
 
@@ -342,7 +346,7 @@ for i in range(10):
         prim.set_joint_positions(np.zeros(6))
         #break
     
-    print(f"Joint states: {state.positions}")
+    
     prim.set_joint_positions(random_dof_values)
     rep.utils.send_og_event(event_name="randomize_light")
     rep.orchestrator.step(rt_subframes=1)
@@ -351,7 +355,9 @@ for i in range(10):
     #rep.utils.send_og_event(event_name="randomize_sphere_light")
     
     rep.orchestrator.step(rt_subframes=1)
-    print(f"Camera Position: {camera.get_default_state().position} and Camera Orientation: {camera.get_default_state().orientation}")    
+    print(f"Camera Position: {camera.get_default_state().position} and Camera Orientation: {camera.get_default_state().orientation}")
+    print(f"Joint states: {state.positions}")
+     
     #print(f"World position: {camera.get_world_pose()[0]} and World orientation: {camera.get_world_pose()[1]}") # this is just to double check the camera position
 
     for j, camera in enumerate(cameras):
