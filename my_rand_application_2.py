@@ -33,6 +33,55 @@ from flying_distractors.collision_box import CollisionBox
 from flying_distractors.dynamic_object_set import DynamicObjectSet
 from flying_distractors.dynamic_shape_set import DynamicShapeSet
 
+def camera_pose():
+    # Generate a random position
+    posx = np.random.uniform(2, 5)
+    posy = np.random.uniform(-5, 5)
+    posz = np.random.uniform(0, 5)
+    position = np.array([posx, posy, posz])
+    # Calculate the direction vector to the origin
+    direction = -position
+
+    # Normalize the direction vector
+    direction /= np.linalg.norm(direction)
+
+    # Calculate the camera's current forward vector
+    forward = np.array([1, 0, 0]) 
+
+    # Calculate the rotation axis (cross product of initial and desired directions)
+    rotation_axis = np.cross(forward, direction)
+    rotation_axis /= np.linalg.norm(rotation_axis)
+
+    # Calculate the rotation angle (angle between initial and desired directions)
+    rotation_angle = np.arccos(np.dot(forward, direction))
+
+    # Create a rotation matrix using the axis-angle representation
+    rotation_matrix = R.from_rotvec(rotation_angle * rotation_axis).as_matrix()
+
+    # Extract Euler angles from the rotation matrix
+    euler_angles = R.from_matrix(rotation_matrix).as_euler('xyz')
+    euler_angles[0] = 0.0
+    return position, euler_angles
+    
+
+def initialise_cameras(num= 1):    
+    cameras = []
+    for i in range(num):
+        pose = camera_pose()
+        camera = Camera(
+                prim_path=f"/World/camera_{i}",
+                position=pose[0],
+                frequency=20,
+                resolution=(1080,  720),
+                orientation=rot_utils.euler_angles_to_quats(np.degrees(pose[1]), degrees=True),
+            )
+        cameras.append(camera)
+    return cameras
+
+def project3d_to_2d(point, camera):
+    # Project the 3D point to the camera
+    point_2d = camera.get_image_coords_from_world_points(point)
+    return point_2d
 
 
 # Calculates forward kinematics using DH-Konvention
@@ -114,6 +163,8 @@ physxSceneAPI.CreateBroadphaseTypeAttr("MBP")
 physxSceneAPI.CreateSolverTypeAttr("TGS")
 
 
+pose = camera_pose()
+cameras = initialise_cameras(1)
 
 # Add lights
 distance_light = rep.create.light(rotation=(315, 0, 0), intensity=3000, light_type="distant")
@@ -125,14 +176,14 @@ omni.timeline.get_timeline_interface().play()
 simulation_app.update()
 
 art = Articulation(prim_path=prim_path, name="abbyArm")
-print(f"Articulation: {art.articulation_handle}")
-print(f"Prim name :{ art.name}")
-print(f"Prim entity: {art.prim}")
-print(f"Prim path: {art.prim_path}")
+# print(f"Articulation: {art.articulation_handle}")
+# print(f"Prim name :{ art.name}")
+# print(f"Prim entity: {art.prim}")
+# print(f"Prim path: {art.prim_path}")
 art.initialize()
 
-print(f"Arm dof upper: {art.dof_properties['upper']}")
-print(f"Arm dof lower: {art.dof_properties['lower']}")
+# print(f"Arm dof upper: {art.dof_properties['upper']}")
+# print(f"Arm dof lower: {art.dof_properties['lower']}")
 #print(f"Arm View: {art_v.dof_names}")
 import omni.isaac.core.utils.stage as stage_utils
 # from omni.isaac.core.robots import Robot
@@ -141,6 +192,9 @@ print(f"Stage: {stage_utils.get_current_stage()}")
 from pxr import Usd, UsdGeom
 
 
+for i,camera in enumerate(cameras):
+    camera.initialize()
+    print(f"Camera {i} position: {camera.get_default_state().position} and Camera {i} orientation: {camera.get_default_state().orientation}")
 
 
 
@@ -162,6 +216,12 @@ for i in range(10):
         # Extract translation from the matrix
         translation = Gf.Vec3d(transform.ExtractTranslation())
         print(f"Translation: {translation}")
+        print(f"type {type(translation)}")
+        translation_np = np.array([translation[0], translation[1], translation[2]])
+        print(f"Translation numpy: {translation_np}")
+        translation_np = np.expand_dims(translation_np, axis=0)
+        print(f"Shape of translation numpy: {translation_np.shape}")
+        print(f"2D Projection: {cameras[0].get_image_coords_from_world_points(translation_np)}")
         #print(f"Rotation: {transform.ExtractRotation()}")
         #rotation = Gf.Rotation(transform.ExtractRotation())
         
