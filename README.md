@@ -39,6 +39,7 @@ Your folder structure should then look like this:
 │   ├── my_rand_application_2.py
 │   ├── my_rand_application.py
 │   ├── my_random.py
+│   ├──synthetic_generator.py
 │   ├── (playground.py)
 │   └── README.md
 ├── flying_distractors
@@ -61,7 +62,7 @@ Your folder structure should then look like this:
 
 Once is achieved and the `python.sh` shell script is found you can simply execute the written code via:
 ```
-/home/user_name/.local/share/ov/pkg/isaac_sim-2023.1.1/python.sh /home/user_name/.local/share/ov/pkg/isaac_sim-2023.1.1/exts/omni.isaac.examples/omni/isaac/examples/user_examples/my_application_1.py 
+/home/dario/.local/share/ov/pkg/isaac_sim-2023.1.1/python.sh /home/dario/.local/share/ov/pkg/isaac_sim-2023.1.1/exts/omni.isaac.examples/omni/isaac/examples/user_examples/synthetic_generator.py
 ```
 
 
