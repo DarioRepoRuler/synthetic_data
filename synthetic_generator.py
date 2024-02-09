@@ -322,7 +322,7 @@ if not os.path.exists(data_dir):
 aborted = False
 
 # Execute the simulation for a number of steps
-for i in range(10):
+for i in range(30):
     
     # Sample random joint angles
     random_dof_values = np.random.uniform(dof_lower, dof_upper)    

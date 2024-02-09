@@ -8,7 +8,7 @@ This repo provides a synthetic data generation tool utilizing isaac sim. It is s
 This repo takes a robot (ABB IRB120 per default) randomizes its joint positions within the limits and captures the ground truth data for the robopose network. 
 To achieve a better synthetic to real world performence of the network various randomizations are implemented in the data such as domain randomization of the background, distractors, randomizations of light sources(position and color).
 
-![synthetic_data](/doc_img/synthetic_data.gif)
+![synthetic_data](/doc_img/synthetic_new.gif)
 ## Setup
 This repo is not wrapped in a docker container so the setup specifications are important. This repo was designed on `Ubuntu 22.0.4` with a `Nvidia Geforce RTX 3070` GPU and a `AMD® Ryzen 9 3900x 12-core` CPU.
 The nvidia GPU was operated with `525.147.05` Nvidia driver. The used isaac sim version is `2023.1.1`.
@@ -64,7 +64,8 @@ Once is achieved and the `python.sh` shell script is found you can simply execut
 ```
 /home/dario/.local/share/ov/pkg/isaac_sim-2023.1.1/python.sh /home/dario/.local/share/ov/pkg/isaac_sim-2023.1.1/exts/omni.isaac.examples/omni/isaac/examples/user_examples/synthetic_generator.py
 ```
-
+This script will now simulate random positions under random lightning conditions with random initilaised camera posiions. The synthetic data will then be stored in a new folder `synthetic_data`. 
+The folder should then contain captured images in the format `{image_number}_{camera_number}.png` and the recorded joint positions, 6d pose of the base and the 3D as well as the projected keypoints sampled in a json file in the format `{image_number}_{camera_number}.json`. 
 
 ## Ressources for Isaac Sim
 - [First steps in isaac sim](https://docs.omniverse.nvidia.com/isaacsim/latest/core_api_tutorials/tutorial_core_hello_world.html#isaac-sim-app-tutorial-core-hello-world)
