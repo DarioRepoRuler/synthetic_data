@@ -8,7 +8,7 @@ This repo provides a synthetic data generation tool utilizing isaac sim. It is s
 This repo takes a robot (ABB IRB120 per default) randomizes its joint positions within the limits and captures the ground truth data for the robopose network. 
 To achieve a better synthetic to real world performence of the network various randomizations are implemented in the data such as domain randomization of the background, distractors, randomizations of light sources(position and color).
 
-
+![synthetic_data](/doc_img/synthetic_data.gif)
 ## Setup
 This repo is not wrapped in a docker container so the setup specifications are important. This repo was designed on `Ubuntu 22.0.4` with a `Nvidia Geforce RTX 3070` GPU and a `AMD® Ryzen 9 3900x 12-core` CPU.
 The nvidia GPU was operated with `525.147.05` Nvidia driver. The used isaac sim version is `2023.1.1`.
@@ -41,18 +41,25 @@ Your folder structure should then look like this:
 │   ├── my_random.py
 │   ├── (playground.py)
 │   └── README.md
-└── flying_distractors
-    ├── __init__.py
-    ├── collision_box.py
-    ├── dynamic_asset_set.py
-    ├── dynamic_object_set.py
-    ├── dynamic_object.py
-    ├── dynamic_shape_set.py
-    └──flying_distractors.py
-
+├── flying_distractors
+│   ├── __init__.py
+│   ├── collision_box.py
+│   ├── dynamic_asset_set.py
+│   ├── dynamic_object_set.py
+│   ├── dynamic_object.py
+│   ├── dynamic_shape_set.py
+│   └──flying_distractors.py
+└──abb_common
+    ├── meshes
+    │   ├── ...
+    ├── urdf
+    │   ├── ...
+    ├── urdf_old
+    │   ├── ...
+    ...
 ```
 
-Once is achieved and the `python shell scrip` is found you can simply execute the written code via:
+Once is achieved and the `python.sh` shell script is found you can simply execute the written code via:
 ```
 /home/user_name/.local/share/ov/pkg/isaac_sim-2023.1.1/python.sh /home/user_name/.local/share/ov/pkg/isaac_sim-2023.1.1/exts/omni.isaac.examples/omni/isaac/examples/user_examples/my_application_1.py 
 ```

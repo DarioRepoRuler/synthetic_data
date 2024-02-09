@@ -173,6 +173,7 @@ import_config.density = 0.0
 
 # Get the urdf file path
 root_path = "/home/dario/Documents/AUT_Proj/data_gen/abb_common"
+root_path = "/home/dario/.local/share/ov/pkg/isaac_sim-2023.1.1/exts/omni.isaac.examples/omni/isaac/examples/user_examples/abb_common"
 file_name = "urdf/irb120.urdf"
 
 # Import the robot
