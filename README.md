@@ -3,8 +3,11 @@ Synthetic data generation for robopose
 </h1>
 This repo provides a synthetic data generation tool utilizing isaac sim. It is specifically designed to provide trainig data for robopose. Robopose estimates a robot's state, which includes the 6D pose of an anchor together with the joint positions using only a RGB image. In order to train the robopose network many images are needed with various conditions which can be achieved more easily by synthtic data. However the ground truth needed for this network are the camera to robot transformation, the joint positions, 3d keypoints(of every base) and the 2D projected keypoints.
 
+
+<br />
 This repo takes a robot (ABB IRB120 per default) randomizes its joint positions within the limits and captures the ground truth data for the robopose network. 
-To achieve a better synthetic to real world performence of the network various randomizations are implemented in the data such as domain randomization of the background, distractors, randomizations of light sources(position and color).   
+To achieve a better synthetic to real world performence of the network various randomizations are implemented in the data such as domain randomization of the background, distractors, randomizations of light sources(position and color).
+
 
 ## Setup
 This repo is not wrapped in a docker container so the setup specifications are important. This repo was designed on `Ubuntu 22.0.4` with a `Nvidia Geforce RTX 3070` GPU and a `AMD® Ryzen 9 3900x 12-core` CPU.
@@ -26,11 +29,30 @@ There are different [workflows](https://docs.omniverse.nvidia.com/isaacsim/lates
 - Import the `flying distractors` from the nvidia code folder into your `user_examples` folder. The distractors folder should be somewhere like `/home/user_name/.local/share/ov/pkg/isaac_sim-2023.1.1/standalone_examples/replicator/offline_pose_generation`. 
 
 Your folder structure should then look like this:
-user_examples/
-|--flying_distractors/
-|--my_rand_application.py
+```
+├── USER_EXAMPLES
+│   ├── init_.py
+│   ├── hello_world_extension.py
+│   ├── hello_world.py
+│   ├── my_application_1.py
+│   ├── my_application.py
+│   ├── my_rand_application_2.py
+│   ├── my_rand_application.py
+│   ├── my_random.py
+│   ├── (playground.py)
+│   └── README.md
+└── flying_distractors
+    ├── __init__.py
+    ├── collision_box.py
+    ├── dynamic_asset_set.py
+    ├── dynamic_object_set.py
+    ├── dynamic_object.py
+    ├── dynamic_shape_set.py
+    └──flying_distractors.py
 
-Once the shell script is found you can simply execute the written code via:
+```
+
+Once is achieved and the `python shell scrip` is found you can simply execute the written code via:
 ```
 /home/user_name/.local/share/ov/pkg/isaac_sim-2023.1.1/python.sh /home/user_name/.local/share/ov/pkg/isaac_sim-2023.1.1/exts/omni.isaac.examples/omni/isaac/examples/user_examples/my_application_1.py 
 ```
