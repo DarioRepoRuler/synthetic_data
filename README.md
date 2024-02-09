@@ -67,6 +67,9 @@ Once is achieved and the `python.sh` shell script is found you can simply execut
 This script will now simulate random positions under random lightning conditions with random initilaised camera posiions. The synthetic data will then be stored in a new folder `synthetic_data`. 
 The folder should then contain captured images in the format `{image_number}_{camera_number}.png` and the recorded joint positions, 6d pose of the base and the 3D as well as the projected keypoints sampled in a json file in the format `{image_number}_{camera_number}.json`. 
 
+We even build in distractors, this helps the network during training to focus on the robot and not get distracted by some other entities within the field of view. 
+![](/doc_img/distractors.png)
+
 ## Ressources for Isaac Sim
 - [First steps in isaac sim](https://docs.omniverse.nvidia.com/isaacsim/latest/core_api_tutorials/tutorial_core_hello_world.html#isaac-sim-app-tutorial-core-hello-world)
 - [Introduction of differen workflows](https://docs.omniverse.nvidia.com/isaacsim/latest/introductory_tutorials/tutorial_intro_workflows.html#isaac-sim-app-tutorial-intro-workflows)
