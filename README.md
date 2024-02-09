@@ -32,15 +32,7 @@ Your folder structure should then look like this:
 ```
 ├── USER_EXAMPLES
 │   ├── init_.py
-│   ├── hello_world_extension.py
-│   ├── hello_world.py
-│   ├── my_application_1.py
-│   ├── my_application.py
-│   ├── my_rand_application_2.py
-│   ├── my_rand_application.py
-│   ├── my_random.py
 │   ├──synthetic_generator.py
-│   ├── (playground.py)
 │   └── README.md
 ├── flying_distractors
 │   ├── __init__.py
