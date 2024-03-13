@@ -1,6 +1,6 @@
 from omni.isaac.kit import SimulationApp
 # Create a simulation application context
-simulation_app = SimulationApp(launch_config={"headless": False})
+simulation_app = SimulationApp(launch_config={"headless": False, "renderer": "RayTracedLighting"})
 
 from omni.isaac.core import World
 from omni.isaac.core.utils.nucleus import get_assets_root_path
@@ -133,7 +133,7 @@ def setup_distractors(collision_box, num_distractors=5, i=0):
         i (int, optional): The index of the distractor set. Defaults to 0.
     """
     distractor_mesh_filenames = ['002_master_chef_can', '004_sugar_box', '005_tomato_soup_can', '006_mustard_bottle', '007_tuna_fish_can', '008_pudding_box', '009_gelatin_box', '010_potted_meat_can', '011_banana', '019_pitcher_base', '021_bleach_cleanser', '024_bowl', '025_mug', '036_wood_block', '037_scissors', '040_large_marker', '051_large_clamp', '052_extra_large_clamp', '061_foam_brick']
-        
+    #distractor_mesh_filenames = [ '011_banana', '037_scissors', '051_large_clamp', '052_extra_large_clamp']
     assets_root_path = get_assets_root_path()
     asset_path = assets_root_path + "/Isaac/Props/YCB/Axis_Aligned/"
     ycb_asset_path = assets_root_path + "/Isaac/Props/YCB/Axis_Aligned/"
@@ -222,6 +222,7 @@ result, prim_path = omni.kit.commands.execute(
 
 # Get stage handle
 stage = omni.usd.get_context().get_stage()
+
 # Enable physics
 scene = UsdPhysics.Scene.Define(stage, Sdf.Path("/physicsScene"))
 # Set gravity
@@ -235,6 +236,17 @@ physxSceneAPI.CreateEnableStabilizationAttr(True)
 physxSceneAPI.CreateEnableGPUDynamicsAttr(False)
 physxSceneAPI.CreateBroadphaseTypeAttr("MBP")
 physxSceneAPI.CreateSolverTypeAttr("TGS")
+
+# # Add ground plane
+# omni.kit.commands.execute(
+#     "AddGroundPlaneCommand",
+#     stage=stage,
+#     planePath="/groundPlane",
+#     axis="Z",
+#     size=2.0,
+#     position=Gf.Vec3f(0, 0, -0.5),
+#     color=Gf.Vec3f(0.5),
+# )
 
 # Gather all background images from the nucleus server
 assets_root_path = get_assets_root_path()
@@ -269,7 +281,7 @@ for i,camera in enumerate(cameras):
     print(f"Camera {i} position: {camera.get_default_state().position} and Camera {i} orientation: {camera.get_default_state().orientation}")
     
     box = setup_collision_box(camera.get_default_state().orientation,camera.get_default_state().position*0.8, collision_box_path = f"/World/collision_box_{i}",  collision_box_name = f"collision_box_{i}")
-    setup_distractors(box, num_distractors=10, i=i)
+    setup_distractors(box, num_distractors=15, i=i)
     
 # Setup the randomization events    
 with rep.trigger.on_custom_event(event_name="randomize_light"):
@@ -286,6 +298,8 @@ with rep.trigger.on_custom_event(event_name="randomize_light"):
         # Set the light's position
         rep.modify.pose(position=(x, y, z),  look_at=(0, 0, 0))
         rep.randomizer.rotation()
+        rep.modify.attribute("color", rep.distribution.uniform((0, 0, 0), (1, 1, 1)))
+        rep.modify.attribute("intensity", random.uniform(2000, 5000))
 
 with rep.trigger.on_custom_event(event_name="randomize_light_1"):
     with distance_light_1:
@@ -301,6 +315,8 @@ with rep.trigger.on_custom_event(event_name="randomize_light_1"):
         # Set the light's position
         rep.modify.pose(position=(x, y, z),  look_at=(0, 0, 0))
         rep.randomizer.rotation()
+        rep.modify.attribute("color", rep.distribution.uniform((0, 0, 0), (1, 1, 1)))
+        rep.modify.attribute("intensity", random.uniform(2000, 5000))
     
 rep.randomizer.register(randomize_domelight, override=True)
 

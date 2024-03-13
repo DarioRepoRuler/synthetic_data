@@ -1,12 +1,12 @@
 <h1 align="center">
 Synthetic data generation for robopose
 </h1>
-This repo provides a synthetic data generation tool utilizing isaac sim. It is specifically designed to provide trainig data for robopose. Robopose estimates a robot's state, which includes the 6D pose of an anchor together with the joint positions using only a RGB image. In order to train the robopose network many images are needed with various conditions which can be achieved more easily by synthtic data. However the ground truth needed for this network are the camera to robot transformation, the joint positions, 3d keypoints(of every base) and the 2D projected keypoints.
+This repo provides a synthetic data generation tool utilizing isaac sim. It is specifically designed to provide training data for robopose. Robopose estimates a robot's state, which includes the 6D pose of an anchor together with the joint positions using only a RGB image. In order to train the robopose network many images are needed with various conditions which can be achieved more easily by synthetic data. However the ground truth needed for this network are the camera to robot transformation, the joint positions, 3d keypoints(of every base) and the 2D projected keypoints.
 
 
 <br />
 This repo takes a robot (ABB IRB120 per default) randomizes its joint positions within the limits and captures the ground truth data for the robopose network. 
-To achieve a better synthetic to real world performence of the network various randomizations are implemented in the data such as domain randomization of the background, distractors, randomizations of light sources(position and color).
+To achieve a better synthetic to real world performance of the network various randomizations are implemented in the data such as domain randomization of the background, distractors, randomizations of light sources(position and color).
 
 ![synthetic_data](/doc_img/synthetic_new.gif)
 ## Setup
@@ -16,13 +16,13 @@ The nvidia GPU was operated with `525.147.05` Nvidia driver. The used isaac sim 
 ## Installation
 The base installation procedure is explained in [this](https://www.youtube.com/watch?v=ZUX9SrPGrbk&t=302s) youtube tutorial. 
 
-For the sake of completness the procedure is sketched here as well:
+For the sake of completeness the procedure is outlined here as well:
 - First register, download and install NVIDIA's omniverse from the [official website](https://www.nvidia.com/de-de/omniverse/). We have used the `free` option. 
 - Within the omniverse launcher install `isaac sim 2023.1.1`, `omniverse cache 2023.1.0` and the `omniverse nucleus navigator 3.3.3`. 
 - After that add a `local host` connection to the nucleus navigator this is important since it also gives you access to some isaac specific entities. 
 
 ## Generating data
-There are different [workflows](https://docs.omniverse.nvidia.com/isaacsim/latest/introductory_tutorials/tutorial_intro_workflows.html#isaac-sim-app-tutorial-intro-workflows) within isaac sim, we are using the `python standalone` workflow for this project since we can easily controll the robot and the time stepping. 
+There are different [workflows](https://docs.omniverse.nvidia.com/isaacsim/latest/introductory_tutorials/tutorial_intro_workflows.html#isaac-sim-app-tutorial-intro-workflows) within isaac sim, we are using the `python standalone` workflow for this project since we can easily control the robot and the time stepping. 
 
 - To execute such a standalone application you first have to find the `python.sh` file which comes with the omniverse. It is usually located somewhere like: `/home/user_name/.local/share/ov/pkg/isaac_sim-2023.1.1/python.sh`. This shell script is important because it executes not only python but also sets important paths accordingly. 
 - Place this repo as `user_examples` folder into the `examples` folder of isaac sim. This folder should be located somewhere like `/home/user_name/.local/share/ov/pkg/isaac_sim-2023.1.1/exts/omni.isaac.examples/omni/isaac/examples/`. The folder structure should then look like:
@@ -56,7 +56,7 @@ Once is achieved and the `python.sh` shell script is found you can simply execut
 ```
 /home/dario/.local/share/ov/pkg/isaac_sim-2023.1.1/python.sh /home/dario/.local/share/ov/pkg/isaac_sim-2023.1.1/exts/omni.isaac.examples/omni/isaac/examples/user_examples/synthetic_generator.py
 ```
-This script will now simulate random positions under random lightning conditions with random initilaised camera posiions. The synthetic data will then be stored in a new folder `synthetic_data`. 
+This script will now simulate random positions under random lightning conditions with random initialized camera positions. The synthetic data will then be stored in a new folder `synthetic_data`. 
 The folder should then contain captured images in the format `{image_number}_{camera_number}.png` and the recorded joint positions, 6d pose of the base and the 3D as well as the projected keypoints sampled in a json file in the format `{image_number}_{camera_number}.json`. 
 
 We even build in distractors, this helps the network during training to focus on the robot and not get distracted by some other entities within the field of view. 
