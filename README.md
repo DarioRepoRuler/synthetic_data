@@ -54,6 +54,8 @@ Your folder structure should then look like this:
     │   ├── ...
     ...
 ```
+- abb_common contains the robot which is used for simulation
+- background_images contains the custom background textures.
 
 Once is achieved and the `python.sh` shell script is found you can simply execute the written code via:
 ```
