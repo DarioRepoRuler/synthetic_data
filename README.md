@@ -14,7 +14,7 @@ This repo is not wrapped in a docker container so the setup specifications are i
 The nvidia GPU was operated with `525.147.05` Nvidia driver. The used isaac sim version is `2023.1.1`.
 
 ## Installation
-The base installation procedure is explained in [this](https://www.youtube.com/watch?v=ZUX9SrPGrbk&t=302s) youtube tutorial. 
+The base installation procedure is explained in the youtube tutorial "[NVIDIA Omniverse Isaac Sim Installation for Robotics Software Engineers](https://www.youtube.com/watch?v=ZUX9SrPGrbk&t=302s)". 
 
 For the sake of completeness the procedure is outlined here as well:
 - First register, download and install NVIDIA's omniverse from the [official website](https://www.nvidia.com/de-de/omniverse/). We have used the `free` option. 
@@ -33,6 +33,7 @@ Your folder structure should then look like this:
 ├── USER_EXAMPLES
 │   ├── init_.py
 │   ├──synthetic_generator.py
+│   ├──config.py
 │   └── README.md
 ├── flying_distractors
 │   ├── __init__.py
@@ -42,6 +43,8 @@ Your folder structure should then look like this:
 │   ├── dynamic_object.py
 │   ├── dynamic_shape_set.py
 │   └──flying_distractors.py
+├──background_images
+│   ├── ...
 └──abb_common
     ├── meshes
     │   ├── ...
@@ -61,6 +64,47 @@ The folder should then contain captured images in the format `{image_number}_{ca
 
 We even build in distractors, this helps the network during training to focus on the robot and not get distracted by some other entities within the field of view. 
 ![](/doc_img/distractors.png)
+
+## Data format
+The generated training data in the json file for a single image of a camera. The JSON files are formatted as follows:
+- **camera_data:**
+  - *location_worldframe:* Array of 3D coordinates.
+  - *quaternion_xyzw_worldframe:* Describes the orientation of the camera.
+
+- **joint_angles:**
+  - Array of numerical values representing joint angles, represented in radian.
+
+- **keypoints_data:**
+  - Array of every joint/link position:
+    - *name:* String representing the link name.
+    - *location:* Array of 3D coordinates.
+    - *projected_location:* Array of 2D projected camera coordinates.
+
+### Configuration of Simulation Parameters in config.py
+
+1. **Basic Parameters:**
+   - `max_time_steps`: Maximum number of simulation steps, also defines the amount of samples.
+   - `angle_offset`: Offset value for angles for the reduced angle boundaries.
+   - `activate_flying_distractors`: Boolean to activate flying distractors.
+   - `activate_ground_plane`: Boolean to activate the ground plane.
+
+2. **Camera Parameters and Position Boundaries:**
+   - `focal_length`: Focal length of the camera.
+   - `camera_resolution`: Tuple representing camera resolution (width, height).
+   - `posx`, `posy`, `posz`: Position boundaries as tuples in the x, y, and z directions.
+   - Other intrinsics can also be altered using functions as `camera.set_fisheye_polynomial_properties`. Therefore please refer to the documentation "[omni.isaac.core](https://docs.omniverse.nvidia.com/py/isaacsim/source/extensions/omni.isaac.sensor/docs/index.html)".
+
+3. **Light Parameters:**
+   - `light_intensity_lower`, `light_intensity_upper`: Lower and upper bounds for light intensity.
+   - `color_lower`, `color_upper`: Lower and upper bounds for light color (RGB) with boundaries [0,1].
+   - `azimuthal_boundary`: Boundary for the azimuthal angle.
+   - `polar_boundary`: Boundary for the polar angle.
+   - `radius_lower`, `radius_upper`: Lower and upper bounds for light radius.
+
+4. **Background Images:**
+   - `use_custom_background_images`: Boolean to determine whether to use custom background images.
+    Per default background images are sampled from the templates of isaac sim. However they can also be sampled from custom made `.hdr` texture files, located in the `background_images` folder.
+    One example is already in there, sampled from the website: [polyhaven.com](https://polyhaven.com/hdris/skies).
 
 ## Ressources for Isaac Sim
 - [First steps in isaac sim](https://docs.omniverse.nvidia.com/isaacsim/latest/core_api_tutorials/tutorial_core_hello_world.html#isaac-sim-app-tutorial-core-hello-world)

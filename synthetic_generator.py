@@ -40,7 +40,10 @@ from data_formatter import create_json_file
 import numpy as np
 from scipy.spatial.transform import Rotation as R
 
-def camera_pose():
+from config import *
+
+
+def camera_pose(x_min, x_max, y_min, y_max, z_min, z_max):
     """
     Generate random camera position and orientation.
 
@@ -49,9 +52,9 @@ def camera_pose():
         euler_angles (numpy.ndarray): Array of shape (3,) representing the camera orientation in Euler angles.
     """
     # Generate a random position
-    posx = np.random.uniform(2, 5)
-    posy = np.random.uniform(-5, 5)
-    posz = np.random.uniform(0, 5)
+    posx = np.random.uniform(x_min, x_max)
+    posy = np.random.uniform(y_min, y_max)
+    posz = np.random.uniform(z_min, z_max)
     position = np.array([posx, posy, posz])
     # Calculate the direction vector to the origin
     direction = -position
@@ -78,7 +81,7 @@ def camera_pose():
     return position, euler_angles
     
 
-def initialise_cameras(num=1):
+def initialise_cameras(num=1, x_min=-1, x_max=1, y_min=-1, y_max=1, z_min=0, z_max=1):
     """
     Initialize and return a list of camera objects.
 
@@ -90,14 +93,15 @@ def initialise_cameras(num=1):
     """
     cameras = []
     for i in range(num):
-        pose = camera_pose()
+        pose = camera_pose(x_min, x_max, y_min, y_max, z_min, z_max)
         camera = Camera(
             prim_path=f"/World/camera_{i}",
             position=pose[0],
             frequency=20,
-            resolution=(1080, 720),
+            resolution=camera_resolution,
             orientation=rot_utils.euler_angles_to_quats(np.degrees(pose[1]), degrees=True),
         )
+        camera.set_focal_length(focal_length)
         cameras.append(camera)
     return cameras
 
@@ -238,15 +242,16 @@ physxSceneAPI.CreateBroadphaseTypeAttr("MBP")
 physxSceneAPI.CreateSolverTypeAttr("TGS")
 
 # # Add ground plane
-# omni.kit.commands.execute(
-#     "AddGroundPlaneCommand",
-#     stage=stage,
-#     planePath="/groundPlane",
-#     axis="Z",
-#     size=2.0,
-#     position=Gf.Vec3f(0, 0, -0.5),
-#     color=Gf.Vec3f(0.5),
-# )
+if activate_ground_plane:
+    omni.kit.commands.execute(
+        "AddGroundPlaneCommand",
+        stage=stage,
+        planePath="/groundPlane",
+        axis="Z",
+        size=2.0,
+        position=Gf.Vec3f(0, 0, -0.5),
+        color=Gf.Vec3f(0.5),
+    )
 
 # Gather all background images from the nucleus server
 assets_root_path = get_assets_root_path()
@@ -258,10 +263,19 @@ for i, image in enumerate(os.listdir(images_path)):
     images_paths.append(os.path.join(images_path, image))
 dome_texture_paths = [dome_texture_path + dome_texture + ".hdr" for dome_texture in dome_tex]
 
+if use_custom_background_images:
+    dome_texture_paths = []
+    background_folder = os.path.join(os.getcwd(), "background_images")
+    if not os.path.exists(background_folder):
+        assert False, f"Background images folder {background_folder} does not exist"
+    dome_img = os.listdir(background_folder)
+    for img in dome_img:
+        dome_texture_paths.append(os.path.join(background_folder, img))
+
 # Add camera
 # Initialize the camera
-pose = camera_pose()
-cameras = initialise_cameras(2)
+#pose = camera_pose()
+cameras = initialise_cameras(2, posx[0], posx[1], posy[0], posy[1], posz[0], posz[1])
 
 # Add lights
 distance_light = rep.create.light(rotation=(315, 0, 0), intensity=3000, light_type="distant")
@@ -280,16 +294,17 @@ for i,camera in enumerate(cameras):
     camera.initialize()
     print(f"Camera {i} position: {camera.get_default_state().position} and Camera {i} orientation: {camera.get_default_state().orientation}")
     
-    box = setup_collision_box(camera.get_default_state().orientation,camera.get_default_state().position*0.8, collision_box_path = f"/World/collision_box_{i}",  collision_box_name = f"collision_box_{i}")
-    setup_distractors(box, num_distractors=15, i=i)
+    if activate_flying_distractors:
+        box = setup_collision_box(camera.get_default_state().orientation,camera.get_default_state().position*0.8, collision_box_path = f"/World/collision_box_{i}",  collision_box_name = f"collision_box_{i}")
+        setup_distractors(box, num_distractors=15, i=i)
     
 # Setup the randomization events    
 with rep.trigger.on_custom_event(event_name="randomize_light"):
     with distance_light:
         # Calculate random spherical coordinates
-        theta = random.uniform(0, math.pi)  # Azimuthal angle
-        phi = random.uniform(0, math.pi/4)       # Polar angle
-        r = random.uniform(5, 10)
+        theta = random.uniform(0, azimuthal_boundary)  # Azimuthal angle
+        phi = random.uniform(0, polar_boundary)       # Polar angle
+        r = random.uniform(radius_lower, radius_upper)
         # Convert spherical coordinates to Cartesian coordinates
         x = r* math.sin(phi) * math.cos(theta)
         y = r* math.sin(phi) * math.sin(theta)
@@ -298,8 +313,8 @@ with rep.trigger.on_custom_event(event_name="randomize_light"):
         # Set the light's position
         rep.modify.pose(position=(x, y, z),  look_at=(0, 0, 0))
         rep.randomizer.rotation()
-        rep.modify.attribute("color", rep.distribution.uniform((0, 0, 0), (1, 1, 1)))
-        rep.modify.attribute("intensity", random.uniform(2000, 5000))
+        rep.modify.attribute("color", rep.distribution.uniform(color_lower, color_upper))
+        rep.modify.attribute("intensity", random.uniform(light_intensity_upper, light_intensity_upper))
 
 with rep.trigger.on_custom_event(event_name="randomize_light_1"):
     with distance_light_1:
@@ -316,7 +331,7 @@ with rep.trigger.on_custom_event(event_name="randomize_light_1"):
         rep.modify.pose(position=(x, y, z),  look_at=(0, 0, 0))
         rep.randomizer.rotation()
         rep.modify.attribute("color", rep.distribution.uniform((0, 0, 0), (1, 1, 1)))
-        rep.modify.attribute("intensity", random.uniform(2000, 5000))
+        rep.modify.attribute("intensity", random.uniform(light_intensity_lower, light_intensity_upper))
     
 rep.randomizer.register(randomize_domelight, override=True)
 
@@ -324,8 +339,8 @@ with rep.trigger.on_custom_event(event_name="randomize_domelight"):
     rep.randomizer.randomize_domelight(dome_texture_paths)#images_paths
     
 # Set the boundaries for joint angles    
-dof_lower = prim.dof_properties['lower'] + 0.1
-dof_upper = prim.dof_properties['upper'] - 0.1
+dof_lower = prim.dof_properties['lower'] + angle_offset
+dof_upper = prim.dof_properties['upper'] - angle_offset
 link_paths = ["/abbyArm/link_1", "/abbyArm/link_2", "/abbyArm/link_3", "/abbyArm/link_4", "/abbyArm/link_5", "/abbyArm/link_6"]
 link_prims = [stage.GetPrimAtPath(link_path) for link_path in link_paths]
 
@@ -338,7 +353,7 @@ if not os.path.exists(data_dir):
 aborted = False
 
 # Execute the simulation for a number of steps
-for i in range(10):
+for i in range(max_time_steps):
     
     # Sample random joint angles
     random_dof_values = np.random.uniform(dof_lower, dof_upper)    
